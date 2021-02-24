@@ -8,7 +8,9 @@ package com.ga2230.Idan.base.structure;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.lang.String;
 
 import com.ga2230.Idan.base.messages.IdanVariable;
 import com.ga2230.Idan.base.messages.builtins.primitives.EmptyMsg;
@@ -22,9 +24,14 @@ public class IdanMaster extends Idan {
     // The ROS-like parameters
     protected HashMap<String, IdanVariable> parameters = new HashMap<>();
 
+    // Nodes, topics, subscriber queue
     protected HashMap<String, IdanTopic> topics = new HashMap<>();
     protected HashMap<String, ArrayList<IdanSubscriber>> subQueue = new HashMap<>();
     protected ArrayList<IdanNode> nodes = new ArrayList<>();
+
+    // List of sub-groups
+    protected HashMap<String, IdanMaster> nodeGroups = new HashMap<>();
+
     protected boolean running = false;
 
     /**
@@ -92,6 +99,25 @@ public class IdanMaster extends Idan {
     }
 
     /**
+     * Initialization of several Idan nodes, if you are lazy and don't want to initialize the node yourself
+     * If you have customizations to do init yourself and use master.addNode(node)
+     *
+     * @param name The name of the node
+     * @param clazzList Pass the nameofclass.class and it will be taken care of
+     */
+    public void initNode(String name, Class[] clazzList){
+        for (Class c: clazzList) {
+            try {
+                Constructor<?> constructor = c.getConstructor(String.class, IdanMaster.class);
+                IdanNode node = (IdanNode) constructor.newInstance(name, this);
+                nodes.add(node);
+            } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
      * Adding a node to the master's list, if there are customizations you want to do
      * to the node, use this method, otherwise use initNode("nodeName", node.class)
      *
@@ -99,6 +125,17 @@ public class IdanMaster extends Idan {
      */
     public void addNode(IdanNode node){
         nodes.add(node);
+    }
+
+    /**
+     * Adding several nodes to the master's list, if there are customizations you want to do
+     * to the node, use this method, otherwise use initNode("nodeName", node.class)
+     *
+     * @param nodeList List of constructed nodes.
+     */
+    public void addNode(IdanNode[] nodeList)
+    {
+        nodes.addAll(Arrays.asList(nodeList));
     }
 
     /**
@@ -214,6 +251,9 @@ public class IdanMaster extends Idan {
      * Killing all of the node's main loop
      */
     public void stop(){
+        for (IdanMaster master: nodeGroups.values()) {
+            master.stop();
+        }
         running = false;
     }
 
@@ -235,5 +275,99 @@ public class IdanMaster extends Idan {
      */
     public boolean is_running() {
         return running;
+    }
+
+    /**
+     * Add a node group to master
+     * @param group An IdanMaster object containing the groups
+     */
+    public void addGroup(IdanMaster group){
+        nodeGroups.put(group.getID(), group);
+    }
+
+    /**
+     * Get the group by its name
+     * @param groupName The name of the group
+     * @return The wanted group
+     */
+    public IdanMaster getGroup(String groupName){
+        return nodeGroups.get(groupName);
+    }
+
+    /**
+     * Starts all of the nodes in a node group
+     * @param groupName Name of the node group to start
+     */
+    public void startGroup(String groupName){
+        getGroup(groupName).start();
+    }
+
+    /**
+     * Stops all of the nodes in a node group
+     * @param groupName Name of the node group to stop
+     */
+    public void stopGroup(String groupName){
+        getGroup(groupName).stop();
+    }
+
+    /**
+     * Starts all groups
+     */
+    public void startGroups(){
+        for (IdanMaster group: nodeGroups.values()) {
+            group.start();
+        }
+    }
+
+    /**
+     * Stops all groups
+     */
+    public void stopGroups(){
+        for (IdanMaster group: nodeGroups.values()) {
+            group.stop();
+        }
+    }
+
+    /**
+     * Returns the indented version of the sub-groups
+     * @param child Child's toString
+     * @return Indented toString
+     */
+    protected String fromChildren(IdanMaster child){
+        String[] split = child.toString().split("\n");
+        for (int i = 0; i < split.length; i++) {
+            split[i] = "\t" + split[i];
+        }
+        return String.join("\n", split);
+    }
+    
+    public String toString(){
+        StringBuilder sb = new StringBuilder();
+
+        // Add Nodes
+        sb.append(getID().toUpperCase() + "\'s nodes:\n");
+        if (nodes.size() > 0) {
+            for (IdanNode node : nodes) {
+                sb.append("\t" + node.getID() + "\n");
+            }
+        } else{ sb.append("\tNone\n"); }
+
+        // Add parameters
+        sb.append(getID().toUpperCase() + "\'s parameters:\n");
+        if (parameters.size() > 0){
+            for (String paramKey: parameters.keySet()) {
+                sb.append("\t"+paramKey+"\n");
+            }
+        } else { sb.append("\tNone\n"); }
+
+        // Add sub-groups
+        sb.append(getID().toUpperCase() + "\'s groups:\n");
+        if (nodeGroups.size() > 0){
+            for (IdanMaster group: nodeGroups.values()) {
+                sb.append(fromChildren(group)+"\n");
+            }
+        } else{ sb.append("\tNone\n"); }
+
+        return sb.toString();
     }
 }

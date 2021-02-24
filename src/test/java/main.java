@@ -12,16 +12,21 @@ public class main {
         // Init the master
         IdanMaster master = new IdanMaster("Master");
 
+        IdanMaster pingPong = new IdanMaster("PingPong");
+
         // Init the ping node
-        master.initNode("ping", Ping.class);
+        pingPong.initNode("ping", Ping.class);
 
         // An alternative and equivalent way to register a node
-        Pong pong = new Pong("pong", master);
-        master.addNode(pong);
+        Pong pong = new Pong("pong", pingPong);
+        pingPong.addNode(pong);
+
+        master.addGroup(pingPong);
+        System.out.println(master);
 
         // Start the master (Call each mainLoop of every node, then deletes them from memory)
         // sets master.is_running() to true (USE THAT VARIABLE FOR THREAD SAFETY)
-        master.start();
+        master.startGroups();
 
         new IdanRate(10000).sleep();
 
