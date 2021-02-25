@@ -19,7 +19,7 @@ public abstract class IdanNode extends Idan {
      * @param master An IdanMaster instance
      */
     public IdanNode(String name, IdanMaster master) {
-        super(name, Type.NODE);
+        super(name);
         this.master = master;
     }
 

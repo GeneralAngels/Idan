@@ -27,7 +27,7 @@ public class IdanPublisher extends Idan {
      * @param master The IdanMaster object
      */
     public IdanPublisher(String name, Class clazz, String nodeName, IdanMaster master) {
-        super(name, Type.PUBLISHER);
+        super(name);
         inputType = clazz;
         this.nodeName = nodeName;
         this.master = master;

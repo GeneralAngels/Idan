@@ -30,7 +30,7 @@ public class IdanSubscriber <T> extends Idan {
      * @param callback Callback function to handle the input.
      */
     public IdanSubscriber(String subscription, String nodeName, int queueSize, Function callback) {
-        super(subscription, Type.SUBSCRIBER);
+        super(subscription);
 
         this.callback = callback;
         this.queueSize = queueSize;

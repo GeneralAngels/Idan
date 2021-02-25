@@ -39,7 +39,7 @@ public class IdanMaster extends Idan {
      * @param ID The name of the master
      */
     public IdanMaster(String ID){
-        super(ID, Type.MASTER);
+        super(ID);
     }
 
     /**

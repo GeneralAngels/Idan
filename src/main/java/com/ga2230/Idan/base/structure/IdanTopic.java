@@ -20,7 +20,7 @@ public class IdanTopic<T> extends Idan {
      * @param ID The address of the topic
      */
     public IdanTopic(String ID){
-        super(ID, Type.TOPIC);
+        super(ID);
     }
 
     /**

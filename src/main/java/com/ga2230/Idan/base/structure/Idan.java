@@ -11,36 +11,14 @@ import com.ga2230.Idan.base.utils.Logger;
   * Idan is a top-level class, responsible for binding things together
   */
 public class Idan {
-    // A list of possible roles the Idan class can occupy
-    public enum Type {
-        NODE,
-        TOPIC,
-        SUBSCRIBER,
-        PUBLISHER,
-        MASTER
-    }
-    
     private final String id;
-    private final Type type;
 
     /**
-     * The Idan constructor, sets the ID and type for an instance
+     * The Idan constructor, sets the ID for an instance
      * @param ID ID with the ROS naming convension (/robot/rightEncoder, ETC...) or the name of the type (Topic, Node, ETC...)
-     * @param type The type of object it represents
      */
-    public Idan(String ID, Type type){
-        // Set the ID and type
+    public Idan(String ID){
         this.id = ID;
-        this.type = type;
-    }
-
-    /**
-     * A constructor for non instances (Types)
-     * @param type
-     */
-    public Idan(Type type){
-        this.type = type;
-        this.id = "";
     }
 
     /**
@@ -52,14 +30,6 @@ public class Idan {
     }
 
     /**
-     * Get type
-     * @return Type of object
-     */
-    public Type getType(){
-        return this.type;
-    }
-
-    /**
      * Logs the message with the ID
      * @param message
      */
@@ -67,6 +37,4 @@ public class Idan {
         // Send the message to the logger
         Logger.log(this.id, message);
     }
-
-
 }
