@@ -26,11 +26,11 @@ public class IdanMaster extends Idan {
 
     // Nodes, topics, subscriber queue
     protected HashMap<String, IdanTopic> topics = new HashMap<>();
-    protected HashMap<String, ArrayList<IdanSubscriber>> subQueue = new HashMap<>();
     protected ArrayList<IdanNode> nodes = new ArrayList<>();
 
     // List of sub-groups
     protected HashMap<String, IdanMaster> nodeGroups = new HashMap<>();
+    protected IdanMaster daddy;
 
     protected boolean running = false;
 
@@ -40,6 +40,16 @@ public class IdanMaster extends Idan {
      */
     public IdanMaster(String ID){
         super(ID);
+    }
+
+    /**
+     * Constructs an IdanMaster with a parent
+     * @param ID The name of the master
+     * @param parent The master above this master
+     */
+    public IdanMaster(String ID, IdanMaster parent){
+        super(ID);
+        parent.addGroup(this);
     }
 
     /**
@@ -70,8 +80,7 @@ public class IdanMaster extends Idan {
      * @throws Exception In case of invalid key.
      */
     public IdanVariable getParam(String key){
-        // Check the existance of the parameter and return it, otherwise throw exception.
-
+        // Check the existence of the parameter and return it, otherwise throw exception.
         try {
             return parameters.get(key).clone();
         } catch (Exception e){
@@ -163,14 +172,11 @@ public class IdanMaster extends Idan {
 	private void registerSub(IdanSubscriber subscriber)  {
         String ID = subscriber.getID();
 
-        // If the topic doesn't exist, wait for it to be created
-        if(this.hasTopic(ID)){
-            topics.get(ID).addSubscriber(subscriber);
-            return;
-        } else if(!this.subQueue.containsKey(ID)){
-            this.subQueue.put(ID, new ArrayList<>());
-        }
-        this.subQueue.get(ID).add(subscriber);
+        // Creating a topic for the publisher
+        createTopic(ID);
+
+        // Add the subscriber to the topic
+        topics.get(ID).addSubscriber(subscriber);
     }
 
     /**
@@ -183,6 +189,8 @@ public class IdanMaster extends Idan {
      *          this.callback(parameter);
      *      }
      *  });
+     *
+     *  new Function()... can be replaced with this:callback
      *
      * @param node The node it initializes from
      * @param name Name of topic subscription.
@@ -202,14 +210,6 @@ public class IdanMaster extends Idan {
 
         // Creating a topic for the publisher
         createTopic(ID);
-
-        // Liberates the waiting subscribers (of there are any)
-        if(subQueue.containsKey(ID)){
-            for (IdanSubscriber sub: subQueue.get(ID)) {
-                registerSub(sub);
-            }
-            subQueue.remove(ID);
-        }
     }
 
     /**
@@ -231,11 +231,55 @@ public class IdanMaster extends Idan {
 
     /**
      * The publisher object calls this method inside
+     * THIS METHOD IS OPEN FOR THE USER FOR FLEXIBILITY,
+     * SHOULD BE
+     *
      * @param input The passed object
      * @param pub The publisher object, to find the topic
+     * @return Boolean on whether the publishing was successful
      */
-    public void publish(Object input, IdanPublisher pub) {
-        if(running){topics.get(pub.getID()).publish(input);}
+    public boolean publish(Object input, IdanPublisher pub) {
+        if(running){
+            boolean success = false;
+
+            // Send to the masters topics
+            if(topics.containsKey(pub.getID())) {
+                topics.get(pub.getID()).publish(input);
+                success = true;
+            }
+
+            if (daddy != null){
+                // Send the publishing up the hierarchy
+                success |= daddy.publish(input, pub);
+            }
+            return success;
+        }
+        return false;
+    }
+
+    /**
+     * Publish the data down in the hierarchy to the sub-groups.
+     * @param input The input data.
+     * @param pub The publisher object to find the topics.
+     * @return Boolean on whether the publishing was successful.
+     */
+    public boolean publishDown(Object input, IdanPublisher pub){
+        if(running){
+            boolean success = false;
+
+            // Send to the masters topics
+            if(topics.containsKey(pub.getID())) {
+                topics.get(pub.getID()).publish(input);
+                success = true;
+            }
+
+            // Send down to the kids
+            for (IdanMaster child: nodeGroups.values()) {
+                success |= child.publishDown(input, pub);
+            }
+            return success;
+        }
+        return false;
     }
 
     /**
@@ -251,10 +295,17 @@ public class IdanMaster extends Idan {
      * Killing all of the node's main loop
      */
     public void stop(){
+        running = false;
         for (IdanMaster master: nodeGroups.values()) {
             master.stop();
         }
-        running = false;
+    }
+
+    public void startNodes(){
+        // Loop on each node and start its mainLoop
+        for (IdanNode node: nodes) {
+            new Thread(node::mainLoop).start();
+        }
     }
 
     /**
@@ -263,10 +314,9 @@ public class IdanMaster extends Idan {
     public void start(){
         running = true;
 
-        // Loop on each node and start its mainLoop
-        for (IdanNode node: nodes) {
-            new Thread(node::mainLoop).start();
-        }
+        startNodes();
+        startGroups();
+
         nodes.clear(); // Just because memory
     }
 
@@ -283,6 +333,7 @@ public class IdanMaster extends Idan {
      */
     public void addGroup(IdanMaster group){
         nodeGroups.put(group.getID(), group);
+        group.setDaddy(this);
     }
 
     /**
@@ -369,5 +420,18 @@ public class IdanMaster extends Idan {
         } else{ sb.append("\tNone\n"); }
 
         return sb.toString();
+    }
+
+    /**
+     * Sets the parent master (Daddy (; )
+     * @param daddy The master of this master
+     */
+    public void setDaddy(IdanMaster daddy){
+        this.daddy = daddy;
+        syncParameters(daddy.parameters);
+    }
+
+    protected void syncParameters(HashMap<String, IdanVariable> map){
+        parameters = map;
     }
 }

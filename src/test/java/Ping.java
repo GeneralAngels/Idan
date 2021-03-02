@@ -34,7 +34,7 @@ public class Ping extends IdanNode{
 
         // Make a publisher, taking the node (this), the name of the topic to publish to
         // and the class of the message to publish (In this case it's the empty message)
-        pongPub = master.Publisher(this, "ping", EmptyMsg.class);
+        pongPub = master.Publisher(this, "ping", Integer.class);
 
         // Make the subscriber from this node, subscribed to the topic ping,
         // with queue size of 10 (the amount of messages to wait), and calling the function ping
@@ -61,7 +61,7 @@ public class Ping extends IdanNode{
         // This function is called at the start
 
         // Starts the ping-pong with a publish
-        pongPub.publish(new EmptyMsg());
+        pongPub.publishDown(1);
         log("ping");
 
         // A loop to show that the mainLoop can still run
@@ -88,12 +88,12 @@ public class Ping extends IdanNode{
         int value = ((Int32)master.getParam("number")).data;
 
         // Log the call with the new value
-        log("ping " + value);
+        log("ping " + value+", "+msg);
 
         // Increment "number" by 1
         master.setParam("number", new Int32(value+1));
 
         // Publish to the topic
-        pongPub.publish(new EmptyMsg());
+        pongPub.publishDown((Integer) msg +1);
     }
 }

@@ -9,6 +9,9 @@ import com.ga2230.Idan.base.messages.IdanVariable;
 import com.ga2230.Idan.base.messages.builtins.primitives.EmptyMsg;
 import com.ga2230.Idan.base.utils.Logger;
 
+import javax.xml.crypto.Data;
+import java.util.concurrent.atomic.AtomicLongArray;
+
 /**
  * IdanPublisher is the object that is responsible for publishing
  * data to the master
@@ -18,6 +21,14 @@ public class IdanPublisher extends Idan {
     private Class inputType;
     private IdanMaster master;
     private String nodeName;
+
+
+    private class DataHolder extends IdanVariable{
+        public final Object data;
+        public DataHolder(Object data){
+            this.data = data;
+        }
+    }
 
     /**
      * Constructor.
@@ -34,10 +45,11 @@ public class IdanPublisher extends Idan {
     }
 
     /**
-     * Publishes the input to the master
-     * @param input The input object
+     * Checking if the input is the promised type, and printing the error message in case.
+     * @param input The input to the topic.
+     * @return Whether the input is valid.
      */
-    public void publish(IdanVariable input) {
+    private boolean checkPublishing(Object input){
         // Check if it's the right type to send, and send the appropriate message.
         if (input.getClass() != inputType){
             StringBuilder sb = new StringBuilder();
@@ -47,17 +59,52 @@ public class IdanPublisher extends Idan {
             sb.append(input.getClass().getName());
             sb.append(")");
             log(sb.toString());
+            return false; // Problem with input
+        }
+        return true; // Input OK and ready to send
+    }
+
+    /**
+     * Publishes the input to the master
+     * @param input The input object
+     */
+    public void publish(Object input) {
+        if (!checkPublishing(input)){
             return;
         }
 
         // UGHHHHHHHHHHHHHHHHHHHHHHHHHH HANDLE PASS BY REFERENCE FUCK THIS SHIT ITS 3AM
-        Object dummy = null;
-        dummy = input.clone();
+        Object dummy = ((DataHolder)new DataHolder(input).clone()).data;
+
         // If ok, publish to master
         if (dummy != null) {
-            Object finalDummy = dummy; // The compiler won't shut up
             new Thread(() -> {
-                this.master.publish(finalDummy, this);
+                if (!this.master.publish(dummy, this)){
+                    log("Publishing not successful. Master \""+master.getID()+"\" and his children are not subscribed to the topic: "+getID());
+                }
+            }).start();
+        }
+    }
+
+    /**
+     * Send the data down the hierarchy
+     * @param input
+     *
+     */
+    public void publishDown(Object input){
+        if (!checkPublishing(input)){
+            return;
+        }
+
+        // UGHHHHHHHHHHHHHHHHHHHHHHHHHH HANDLE PASS BY REFERENCE FUCK THIS SHIT ITS 3AM
+        Object dummy = ((DataHolder)new DataHolder(input).clone()).data;
+
+        // If ok, publish to master
+        if (dummy != null) {
+            new Thread(() -> {
+                if (!this.master.publishDown(dummy, this)){
+                    log("Publishing not successful. Master \""+master.getID()+"\" and his parents are not subscribed to the topic: "+getID());
+                }
             }).start();
         }
     }

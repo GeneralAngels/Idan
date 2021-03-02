@@ -15,7 +15,7 @@ public class Idan {
 
     /**
      * The Idan constructor, sets the ID for an instance
-     * @param ID ID with the ROS naming convension (/robot/rightEncoder, ETC...) or the name of the type (Topic, Node, ETC...)
+     * @param ID ID with the ROS naming convention (/robot/rightEncoder, ETC...) or the name of the type (Topic, Node, ETC...)
      */
     public Idan(String ID){
         this.id = ID;

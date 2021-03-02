@@ -29,7 +29,7 @@ public class Pong extends IdanNode{
 
         // Make a publisher, taking the node (this), the name of the topic to publish to
         // and the class of the message to publish (In this case it's the empty message)
-        pingPub = master.Publisher(this, "pong", EmptyMsg.class);
+        pingPub = master.Publisher(this, "pong", Integer.class);
 
         // Make the subscriber from this node, subscribed to the topic ping,
         // with queue size of 10 (the amount of messages to wait), and calling the function pong
@@ -44,7 +44,7 @@ public class Pong extends IdanNode{
 
     // No main loop, void call
     @Override
-    public void mainLoop() {}
+    public void mainLoop() { }
 
     /**
      * This is a callback function for topic subscription.
@@ -59,7 +59,7 @@ public class Pong extends IdanNode{
         int value = ((Int32)master.getParam("number")).data;
 
         // Log the call
-        log("pong "+value);
+        log("ping " + value+", "+msg);
 
         // Will still run due to threading
         // float a = 1/0;
@@ -68,6 +68,6 @@ public class Pong extends IdanNode{
         master.setParam("number", new Int32(value+1));
 
         // Publish to call pong
-        pingPub.publish(new EmptyMsg());
+        pingPub.publish((Integer)msg+1);
     }
 }
