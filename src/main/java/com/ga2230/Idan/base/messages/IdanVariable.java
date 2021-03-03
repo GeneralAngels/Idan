@@ -5,21 +5,47 @@
 
 package com.ga2230.Idan.base.messages;
 
-import com.ga2230.Idan.base.messages.builtins.primitives.EmptyMsg;
 import com.ga2230.Idan.base.utils.Logger;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * Inherit from this class to create new custom variables
  */
-public abstract class IdanVariable implements Cloneable{
+public abstract class IdanVariable {
     // To get rid of the reference
-    public IdanVariable clone() {
-        try {
-            return (IdanVariable) super.clone();
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-            Logger.log(this.getClass().getName(),"Please inherit the IdanVariable object to publish it");
+    // Straight from StackOverflow (With modifications)
+    // Link: https://stackoverflow.com/a/25338780
+    private Object clone(Object obj){
+        try{
+            Object dummy = obj.getClass().newInstance();
+            for (Field field : obj.getClass().getDeclaredFields()) {
+                field.setAccessible(true);
+                if(field.get(obj) == null || Modifier.isFinal(field.getModifiers())){
+                    continue;
+                }
+                if(field.getType().isPrimitive() || field.getType().equals(String.class)
+                        || field.getType().getSuperclass().equals(Number.class)
+                        || field.getType().equals(Boolean.class)){
+                    field.set(dummy, field.get(obj));
+                }else{
+                    Object childObj = field.get(obj);
+                    if(childObj == obj){
+                        field.set(dummy, dummy);
+                    }else{
+                        field.set(dummy, clone(field.get(obj)));
+                    }
+                }
+            }
+            return dummy;
+        }catch(Exception e){
+            return null;
         }
-        return new EmptyMsg();
+    }
+
+    // Cloning the object
+    public Object clone(){
+        return clone(this);
     }
 }

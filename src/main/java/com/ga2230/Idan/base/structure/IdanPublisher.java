@@ -6,11 +6,8 @@
 package com.ga2230.Idan.base.structure;
 
 import com.ga2230.Idan.base.messages.IdanVariable;
-import com.ga2230.Idan.base.messages.builtins.primitives.EmptyMsg;
 import com.ga2230.Idan.base.utils.Logger;
 
-import javax.xml.crypto.Data;
-import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
  * IdanPublisher is the object that is responsible for publishing

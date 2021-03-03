@@ -22,7 +22,7 @@ import com.ga2230.Idan.base.utils.IdanRate;
  */
 public class IdanMaster extends Idan {
     // The ROS-like parameters
-    protected HashMap<String, IdanVariable> parameters = new HashMap<>();
+    protected HashMap<String, Object> parameters = new HashMap<>();
 
     // Nodes, topics, subscriber queue
     protected HashMap<String, IdanTopic> topics = new HashMap<>();
@@ -64,12 +64,18 @@ public class IdanMaster extends Idan {
 
     /**
      * Setting a parameter on the parameter wall
-     * 
+     *
+     * If value is an IdanVariable instance, it'll get rid of the reference.
+     *
      * @param key The key in which to store the value in
      * @param value An object to save
      */
-    public void setParam(String key, IdanVariable value) {
-        parameters.put(key, value.clone());
+    public void setParam(String key, Object value) {
+        if ((value instanceof IdanVariable)) {
+            parameters.put(key, ((IdanVariable) value).clone());
+        } else {
+            parameters.put(key, value);
+        }
     }
 
     /**
@@ -77,17 +83,17 @@ public class IdanMaster extends Idan {
      * 
      * @param key Key of the variable.
      * @return The variable (If found).
-     * @throws Exception In case of invalid key.
      */
-    public IdanVariable getParam(String key){
+    public Object getParam(String key){
         // Check the existence of the parameter and return it, otherwise throw exception.
-        try {
-            return parameters.get(key).clone();
-        } catch (Exception e){
-            e.printStackTrace();
-            log("NO PARAMETER NAMED: \"" + key+ "\". SENDING AN EMPTY MESSAGE INSTEAD");
-            return new EmptyMsg();
+        if(hasParam(key)){
+            Object param = parameters.get(key);
+            if (param instanceof IdanVariable)
+                return ((IdanVariable) param).clone();
+            return param;
         }
+        log("NO PARAMETER NAMED: \"" + key+ "\". SENDING AN EMPTY MESSAGE INSTEAD");
+        return new EmptyMsg();
     }
 
     /**
@@ -431,7 +437,7 @@ public class IdanMaster extends Idan {
         syncParameters(daddy.parameters);
     }
 
-    protected void syncParameters(HashMap<String, IdanVariable> map){
+    protected void syncParameters(HashMap<String, Object> map){
         parameters = map;
     }
 }
