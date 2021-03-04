@@ -14,6 +14,8 @@ import java.lang.reflect.Modifier;
  * Inherit from this class to create new custom variables
  */
 public abstract class IdanVariable {
+    private static Boolean hadErrors = false;
+
     // To get rid of the reference
     // Straight from StackOverflow (With modifications)
     // Link: https://stackoverflow.com/a/25338780
@@ -39,7 +41,14 @@ public abstract class IdanVariable {
                 }
             }
             return dummy;
-        }catch(Exception e){
+        } catch (InstantiationException e) {
+            if (IdanVariable.hadErrors){
+                Logger.log("REFERENCE ERROR", "Could not clone the " + obj.getClass().getName() + " object. " +
+                        "KEEPING THE REFERENCE, TO STOP IT ADD A NO-ARG CONSTRUCTOR");
+                IdanVariable.hadErrors = true;
+            }
+            return obj;
+        } catch(Exception e){
             return null;
         }
     }

@@ -3,7 +3,6 @@
  * // TODO: add github
  */
 
-import com.ga2230.Idan.base.messages.builtins.primitives.EmptyMsg;
 import com.ga2230.Idan.base.messages.builtins.primitives.Int32;
 import com.ga2230.Idan.base.structure.IdanMaster;
 import com.ga2230.Idan.base.structure.IdanNode;
@@ -24,6 +23,7 @@ public class Ping extends IdanNode{
      */
     public Ping(String name, IdanMaster master) {
         super(name, master);
+
 
         // Stick 0 to the parameter wall under the name "number"
         master.setParam("number", new Int32(0));
