@@ -10,7 +10,7 @@ import com.ga2230.Idan.base.utils.Logger;
  /**
   * Idan is a top-level class, responsible for binding things together
   */
-public class Idan {
+public abstract class Idan {
     private final String id;
 
     /**
