@@ -3,11 +3,10 @@
  * // TODO: add github
  */
 
-
 import com.ga2230.Idan.base.structure.IdanMaster;
 import com.ga2230.Idan.base.utils.IdanRate;
 
-public class main {
+public class Main {
     public static void main(String[] args){
         // Init the master
         IdanMaster master = new IdanMaster("Master");
